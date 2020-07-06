@@ -43,6 +43,10 @@ class PyK4A:
         self._device_close()
         self.is_running = False
 
+    def get_color_intrinsics_parameters(self):
+        calibration = k4a_module.device_get_color_intrinsics_parameters(*self._config.unpack())
+        return calibration
+
     def save_calibration_json(self, path):
         calibration = k4a_module.device_get_calibration()
         with open(path, 'w') as f:

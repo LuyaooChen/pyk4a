@@ -165,6 +165,41 @@ extern "C" {
         return res;
     }
 
+    static PyObject *device_get_color_intrinsics_parameters(PyObject *self, PyObject *args){
+        k4a_device_configuration_t config = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL;
+        PyArg_ParseTuple(args, "IIIIIIIII", &config.color_format,
+                         &config.color_resolution, &config.depth_mode,
+                         &config.camera_fps, &config.synchronized_images_only,
+                         &config.depth_delay_off_color_usec, &config.wired_sync_mode,
+                         &config.subordinate_delay_off_master_usec,
+                         &config.disable_streaming_indicator);
+
+        k4a_result_t result;
+        k4a_calibration_t calibration;
+        result = k4a_device_get_calibration(device, config.depth_mode,
+                                            config.color_resolution, &calibration);
+        if (result == K4A_RESULT_FAILED)
+        {
+            return Py_BuildValue("");
+        }
+        k4a_calibration_intrinsic_parameters_t *intrinsics = &calibration.color_camera_calibration.intrinsics.parameters;
+        return Py_BuildValue("[f,f,f,f,f,f,f,f,f,f,f,f,f,f]",
+                             intrinsics->v[0],
+                             intrinsics->v[1],
+                             intrinsics->v[2],
+                             intrinsics->v[3],
+                             intrinsics->v[4],
+                             intrinsics->v[5],
+                             intrinsics->v[6],
+                             intrinsics->v[7],
+                             intrinsics->v[8],
+                             intrinsics->v[9],
+                             intrinsics->v[10],
+                             intrinsics->v[11],
+                             intrinsics->v[12],
+                             intrinsics->v[13]);
+    }
+
     static void capsule_cleanup(PyObject *capsule) {
         k4a_image_t *image = (k4a_image_t*)PyCapsule_GetContext(capsule);
         k4a_image_release(*image);
@@ -332,6 +367,7 @@ extern "C" {
         {"device_set_color_control", device_set_color_control, METH_VARARGS, "Set device color control."},
         {"device_get_color_control_capabilities", device_get_color_control_capabilities, METH_VARARGS, "Get device color control capabilities."},
         {"device_get_calibration", device_get_calibration, METH_VARARGS, "Get device calibration in json format."},
+        {"device_get_color_intrinsics_parameters", device_get_color_intrinsics_parameters, METH_VARARGS, "Get color intrinsics parameters."},
         {"calibration_set_from_raw", calibration_set_from_raw, METH_VARARGS, "Temporary set the calibration from a json format. Must be called after device_start_cameras."},
         {"transformation_depth_image_to_color_camera", transformation_depth_image_to_color_camera, METH_VARARGS, "Transforms the depth map into the geometry of the color camera."},
         {NULL, NULL, 0, NULL}
